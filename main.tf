@@ -203,8 +203,8 @@ data "aws_iam_policy_document" "codebuild" {
 }
 
 module "codebuild" {
-  source                      = "cloudposse/codebuild/aws"
-  version                     = "0.37.0"
+  source                      = "github.com/pingbui/terraform-aws-codebuild.git?ref=0.37.1a"
+  #version                    = "0.37.0"
   build_image                 = var.build_image
   build_compute_type          = var.build_compute_type
   buildspec                   = var.buildspec
