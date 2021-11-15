@@ -203,7 +203,7 @@ data "aws_iam_policy_document" "codebuild" {
 }
 
 module "codebuild" {
-  source                      = "github.com/pingbui/terraform-aws-codebuild.git?ref=0.37.1a"
+  source = "github.com/pingbui/terraform-aws-codebuild.git?ref=0.37.1a"
   #version                    = "0.37.0"
   build_image                 = var.build_image
   build_compute_type          = var.build_compute_type
@@ -256,23 +256,50 @@ resource "aws_codepipeline" "default" {
     type     = "S3"
   }
 
-  stage {
-    name = "Source"
+  dynamic "stage" {
+    for_each = var.codestar_connections_arn == "" ? ["true"] : []
+    content {
+      name = "Source"
 
-    action {
-      name             = "Source"
-      category         = "Source"
-      owner            = "ThirdParty"
-      provider         = "GitHub"
-      version          = "1"
-      output_artifacts = ["code"]
+      action {
+        name             = "Source"
+        category         = "Source"
+        owner            = "ThirdParty"
+        provider         = "GitHub"
+        version          = "1"
+        output_artifacts = ["code"]
 
-      configuration = {
-        OAuthToken           = var.github_oauth_token
-        Owner                = var.repo_owner
-        Repo                 = var.repo_name
-        Branch               = var.branch
-        PollForSourceChanges = var.poll_source_changes
+        configuration = {
+          OAuthToken           = var.github_oauth_token
+          Owner                = var.repo_owner
+          Repo                 = var.repo_name
+          Branch               = var.branch
+          PollForSourceChanges = var.poll_source_changes
+        }
+      }
+    }
+  }
+
+  dynamic "stage" {
+    for_each = var.codestar_connections_arn != "" ? ["true"] : []
+    content {
+      name = "Source"
+
+      action {
+        name             = "Source"
+        category         = "Source"
+        owner            = "AWS"
+        provider         = "CodeStarSourceConnection"
+        version          = "1"
+        output_artifacts = ["code"]
+
+        configuration = {
+          BranchName           = var.branch
+          ConnectionArn        = var.codestar_connections_arn
+          FullRepositoryId     = "${var.repo_owner}/${var.repo_name}"
+          OutputArtifactFormat = "CODE_ZIP"
+
+        }
       }
     }
   }
@@ -335,6 +362,31 @@ resource "aws_codepipeline" "default" {
           Extract    = "true"
           CannedACL  = var.website_bucket_acl
         }
+      }
+    }
+  }
+
+  dynamic "stage" {
+    for_each = var.codedeploy_application_name != "" && var.codedeploy_deployment_group_name != "" ? ["true"] : []
+    content {
+      name = "Deploy"
+
+      action {
+        category = "Deploy"
+        configuration = {
+          ApplicationName     = var.codedeploy_application_name
+          DeploymentGroupName = var.codedeploy_deployment_group_name
+        }
+        input_artifacts = [
+          "package",
+        ]
+        name             = "Deploy"
+        output_artifacts = []
+        owner            = "AWS"
+        provider         = "CodeDeploy"
+        region           = var.region
+        run_order        = 1
+        version          = "1"
       }
     }
   }

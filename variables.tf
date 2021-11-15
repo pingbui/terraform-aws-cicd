@@ -191,3 +191,21 @@ variable "website_bucket_acl" {
   default     = "public-read"
   description = "Canned ACL of the S3 bucket objects that get served as a website, can be private if using CloudFront with OAI"
 }
+
+variable "codestar_connections_arn" {
+  type        = string
+  default     = ""
+  description = "The ARN of CodeStar connection"
+}
+
+variable "codedeploy_application_name" {
+  type        = string
+  default     = ""
+  description = "The name of CodeDeploy application"
+}
+
+variable "codedeploy_deployment_group_name" {
+  type        = string
+  default     = ""
+  description = "The name of CodeDeploy deployment group"
+}
