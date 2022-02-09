@@ -13,6 +13,7 @@ variable "elastic_beanstalk_environment_name" {
 variable "github_oauth_token" {
   type        = string
   description = "GitHub Oauth Token"
+  default     = ""
 }
 
 variable "github_webhooks_token" {
